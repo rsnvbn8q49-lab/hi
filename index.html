@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Tư vấn địa danh</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f0f2f5;
+}
+
+.app {
+    width: 66%;
+    max-width: 900px;
+    min-width: 360px;
+    height: 100vh;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+@media (max-width: 900px) {
+    .app {
+        width: 100%;
+    }
+}
+
+/* Header */
+.header {
+    background: linear-gradient(90deg,#2563eb,#4f46e5);
+    color: white;
+    padding: 14px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Chat area */
+#chat {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    background: #f5f7fb;
+}
+
+/* Message row */
+.msg-row {
+    display: flex;
+    margin-bottom: 14px;
+    align-items: flex-end;
+}
+
+/* Align */
+.bot-row { justify-content: flex-start; }
+.user-row { justify-content: flex-end; }
+
+/* Avatar */
+.avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin: 0 8px;
+}
+
+/* Bubble */
+.bubble {
+    max-width: 65%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+/* Gemini style */
+.bot-bubble {
+    background: #ffffff;
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.user-bubble {
+    background: #2563eb;
+    color: white;
+    border-bottom-right-radius: 6px;
+}
+
+/* Time */
+.time {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+    text-align: right;
+}
+
+/* Input */
+.input-area {
+    display: flex;
+    padding: 12px;
+    gap: 10px;
+    border-top: 1px solid #ddd;
+}
+
+input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    outline: none;
+}
+
+button {
+    padding: 12px 18px;
+    border-radius: 20px;
+    border: none;
+    background: #2563eb;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+button:hover { background: #1e40af; }
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<div class="header" id="title">Tư vấn địa danh</div>
+
+<div id="chat"></div>
+
+<div class="input-area">
+    <input id="question" placeholder="Nhập câu hỏi..." />
+    <button onclick="send()">Gửi</button>
+</div>
+
+</div>
+
+<script>
+/* ===== ĐỊA DANH ===== */
+const params = new URLSearchParams(window.location.search);
+const key = params.get("place");
+
+const places = {
+    1: "Nhà Công Tử Bạc Liêu",
+    2: "Quảng Trường Hùng Vương Bạc Liêu",
+    3: "Đình Tân Hưng",
+    4: "Chùa Xiêm Cán",
+    5: "Diện Gió Bạc Liêu",
+    6: "Đồng Nọc Nạng",
+    7: "Biển Khai Long",
+    8: "Mũi Cà Mau",
+    9: "Hòn Đá Bạc",
+    10: "U Minh Hạ",
+    11: "Công Viên Văn Hóa Cà Mau",
+    12: "Quảng Trường Phan Ngọc Hiển",
+
+};
+
+const placeName = places[key];
+if (!placeName) {
+    document.body.innerHTML = "<h2 style='text-align:center'>Không tìm thấy địa danh</h2>";
+    throw new Error("Invalid place");
+}
+
+document.getElementById("title").innerText = placeName;
+const chat = document.getElementById("chat");
+
+/* ===== TIME ===== */
+function getTime() {
+    return new Date().toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+}
+
+/* ===== BOT ===== */
+function botMsg(text) {
+    chat.innerHTML += `
+    <div class="msg-row bot-row">
+        <div class="avatar">🤖</div>
+        <div>
+            <div class="bubble bot-bubble">${text}</div>
+            <div class="time">${getTime()}</div>
+        </div>
+    </div>`;
+}
+
+/* ===== USER ===== */
+function userMsg(text) {
+    chat.innerHTML += `
+    <div class="msg-row user-row">
+        <div>
+            <div class="bubble user-bubble">${text}</div>
+            <div class="time">${getTime()}</div>
+        </div>
+        <div class="avatar">👤</div>
+    </div>`;
+}
+
+/* ===== GREETING ===== */
+botMsg(`Xin chào! Tôi sẽ tư vấn thông tin về <b>${placeName}</b>.`);
+
+/* ===== SEND ===== */
+async function send() {
+    const input = document.getElementById("question");
+    const text = input.value.trim();
+    if (!text) return;
+
+    userMsg(text);
+    input.value = "";
+    chat.scrollTop = chat.scrollHeight;
+
+    const apiKey = "AIzaSyASwQiE4URJxVAsSs65hUoVAkQvmMqemkU";
+
+    const systemPrompt = `
+Bạn là hướng dẫn viên du lịch địa phương tại Việt Nam.
+
+Địa danh đang tư vấn: ${placeName}
+
+Yêu cầu:
+- Chỉ trả lời về ${placeName}
+- Trả lời bằng tiếng Việt
+- Thông tin phải chính xác, dễ hiểu
+- Nếu câu hỏi không liên quan, trả lời:
+"Xin lỗi, tôi chỉ tư vấn về ${placeName}."
+
+Hãy trả lời như đang nói chuyện với du khách.
+`;
+
+const res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=" + apiKey,
+    {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        {
+                            text: systemPrompt + "\nCâu hỏi của du khách: " + text
+                        }
+                    ]
+                }
+            ]
+        })
+    }
+);
+
+    const data = await res.json();
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "Không có phản hồi";
+    botMsg(answer);
+    chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>
